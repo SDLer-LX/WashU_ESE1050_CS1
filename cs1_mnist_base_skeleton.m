@@ -76,10 +76,15 @@ cost_iteration = zeros(max_iter, 1);
 
 %% This for-loop enacts the k-means algorithm
 
+% this loop sorts pictures to clusters and calculates cost
 for iter=1:max_iter
-    
-      % FILL THIS IN!
-    
+    for i = 1:1500 %there are 1500 pictures
+        [index, vec_distance] = assign_vector_to_centroid(train(i,:),centroids); %closest centroid
+        train(i,785) = index; % which cluster this plot belongs to, put in tag on 785 column
+        cost_iteration(iter) = cost_iteration(iter) + vec_distance %for next section
+    end
+
+    centroids = update_Centroids(train,k); %use the update centroid function
 end
 
 %% This section of code plots the k-means cost as a function of the number
@@ -114,11 +119,13 @@ end
 % ***Feel free to experiment.***
 % Note that this function takes two inputs and emits one output (y).
 
+%input: whole training set, k
+%output: a set of k random centroids
 function y=initialize_centroids(data,num_centroids)
 
-random_index=randperm(size(data,1));
+random_index=randperm(size(data,1)); %shuffle to random order
 
-centroids=data(random_index(1:num_centroids),:);
+centroids=data(random_index(1:num_centroids),:); % get the first k rows
 
 y=centroids;
 
@@ -129,10 +136,19 @@ end
 % It returns the index of the assigned centroid and the distance between
 % the vector and the assigned centroid.
 
+%input: one picture, centroid set
+%output: which centroid this picture is closest to
 function [index, vec_distance] = assign_vector_to_centroid(data,centroids)
+  %numbers needed
+  num_centroids = size(centroids,1); %number of centroids
+  distance = zeros(num_centroids,1); %empty vector of zeros for storing distance
 
-% FILL THIS IN
-
+  %nearest neighbor calculation
+  for i = 1:num_centroids
+      % calculate pixel-pixel difference, square them, and add them up
+      distance(i) = sum ((data(1:784)- centroids(i,1:784)).^2); 
+  end
+  [vec_distance,index] = min(distance);
 end
 
 
@@ -143,6 +159,6 @@ end
 
 function new_centroids=update_Centroids(data,K)
 
-% FILL THIS IN
+%FILL THIS IN
 
 end
