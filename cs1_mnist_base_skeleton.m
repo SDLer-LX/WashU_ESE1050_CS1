@@ -165,7 +165,7 @@ function [index, vec_distance] = assign_vector_to_centroid(data,centroids)
   %nearest neighbor calculation
   for i = 1:num_centroids
       % calculate pixel-pixel difference, square them, and add them up
-      distance(i) = sum ((data(1:784)- centroids(i,1:784)).^2); 
+      distance(i) = sqrt(sum ((data(1:784)- centroids(i,1:784)).^2)); 
   end
   %all of the above can be accomplished via the vecnorm function --->
   %vecnorm(centroids(:,1:784) - data(1:784), 2, 2); 
