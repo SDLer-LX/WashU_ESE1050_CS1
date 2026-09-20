@@ -27,7 +27,7 @@ train=train(:,1:784);
 train(:,785)=zeros(1500,1);
 
 % testing set (200 images with 11 outliers)
-test=csvread('mnist_test_200_woutliers.csv');
+test=csvread('mnist_test_200.csv');
 % store the correct test labels
 correctlabels = test(:,785);
 test=test(:,1:784);
@@ -82,18 +82,32 @@ for iter=1:max_iter
     for i=1:(size(train,1)) %iterate over every training image
         [index, vec_distance] = assign_vector_to_centroid(train(i,:),centroids); %closest centroid
         train(i,785) = index; % which cluster this plot belongs to, put in tag on 785 column
-        cost_iteration(iter) = cost_iteration(iter) + vec_distance^2 %euclidean distance means we must square distance for k-means cost
+        cost_iteration(iter) = cost_iteration(iter) + vec_distance^2; %euclidean distance means we must square distance for k-means cost
     end
 
     centroids = update_Centroids(train,k); %use the update centroid function
 end
+%% Determine the label of each centroid based on majority vote of assigned training images
+centroid_labels = zeros(k,1);
 
+for j = 1:k
+    assigned_labels = trainsetlabels(train(:,785) == j);
+
+    if isempty(assigned_labels)
+        centroid_labels(j) = -1;
+    else
+        centroid_labels(j) = mode(assigned_labels);
+    end
+end
+
+%% Save the trained classifier for submission
+save('classifierdata.mat', 'centroids', 'centroid_labels');
 %% This section of code plots the k-means cost as a function of the number
 % of iterations
 
 figure;
 
-plot(cost_iteration);
+plot(cost_iteration,"LineWidth",1.5);
 xlabel('Iteration');
 ylabel('K-means Cost');
 title('K-means Cost vs Iteration'); %consider changes for readability like line-width etc.
@@ -114,7 +128,7 @@ for ind=1:k
     subplot(plotsize,plotsize,ind);
     
     imagesc(reshape(centr,[28 28])');
-    title(strcat('Centroid ',num2str(ind)))
+    title(strcat('Centroid ',num2str(ind)));
 
 end
 
