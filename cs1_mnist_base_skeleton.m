@@ -189,7 +189,9 @@ new_centroids = zeros(K, size(data,2)); % create empty K x 785 vector, size has 
 
 for i=1:K %do once for each centroid
     members = data(data(:,785)==i, 1:784); %find every entry belonging to that centroid
-    new_centroids(i,1:784) = mean(members, 1); %set new centroid to mean of all of its members
+    c = mean(members,1);
+    new_centroids(i,1:784) = c / (norm(c) + eps);  % this is for cosine angle distance
+    %set new centroid to mean of all of its members
 end
 
 end
