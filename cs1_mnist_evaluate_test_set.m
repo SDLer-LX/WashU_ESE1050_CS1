@@ -73,7 +73,8 @@ num_centroids = size(centroids,1);
 dists = zeros(num_centroids,1);
 
 for k = 1:num_centroids
-    dists(k) = sqrt(sum((data - centroids(k,:)).^2));
+    dists(k) = 1 - dot(data(1:784), centroids(k,1:784)) / (norm(data(1:784)) * norm(centroids(k,1:784)) + eps);
+    %dists(k) = sqrt(sum((data - centroids(k,:)).^2));
 end
 
 [vec_distance, index] = min(dists);

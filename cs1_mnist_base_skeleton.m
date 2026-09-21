@@ -62,8 +62,8 @@ imagesc(testimage'); % this command plots an array as an image.  Type 'help imag
 
 %% This next section of code calls the three functions you are asked to specify
 
-k= 20; % set k
-max_iter= 25; % set the number of iterations of the algorithm
+k= 60; % set k
+max_iter= 100; % set the number of iterations of the algorithm
 %cost_iteration graph reveals 25-ish is sufficient
 
 %% The next line initializes the centroids.  Look at the initialize_centroids()
@@ -82,7 +82,8 @@ for iter=1:max_iter
     for i=1:(size(train,1)) %iterate over every training image
         [index, vec_distance] = assign_vector_to_centroid(train(i,:),centroids); %closest centroid
         train(i,785) = index; % which cluster this plot belongs to, put in tag on 785 column
-        cost_iteration(iter) = cost_iteration(iter) + vec_distance^2; %euclidean distance means we must square distance for k-means cost
+        %do square if euclidean. Now we use cosine angular
+        cost_iteration(iter) = cost_iteration(iter) + vec_distance;
     end
 
     centroids = update_Centroids(train,k); %use the update centroid function
@@ -165,7 +166,8 @@ function [index, vec_distance] = assign_vector_to_centroid(data,centroids)
   %nearest neighbor calculation
   for i = 1:num_centroids
       % calculate pixel-pixel difference, square them, and add them up
-      distance(i) = sqrt(sum ((data(1:784)- centroids(i,1:784)).^2)); 
+      distance(i) = 1 - dot(data(1:784), centroids(i,1:784)) / (norm(data(1:784)) * norm(centroids(i,1:784)) + eps);
+      %distance(i) = sqrt(sum ((data(1:784)- centroids(i,1:784)).^2)); 
   end
   %all of the above can be accomplished via the vecnorm function --->
   %vecnorm(centroids(:,1:784) - data(1:784), 2, 2); 
