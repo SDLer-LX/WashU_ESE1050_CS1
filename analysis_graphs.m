@@ -16,7 +16,7 @@ test(:,785) = zeros(200,1);
 max_iter = 50;   % k-means iterations (cost curve shows it converges well before this)
 
 %% try k values
-k_values = [10 20 30 50 75 100 110 120];
+k_values = [10 20 30 50 60 70 80 90 100 110];
 accuracy = zeros(length(k_values),1);
 final_cost = zeros(length(k_values),1);
 
@@ -145,13 +145,13 @@ end
 %  ================================================================
 
 function [centroids, cost_hist, assignments] = run_kmeans(train, k, max_iter)
-    centroids = initialize_centroids(train, k);
+    centroids = kmeansplusplus_initialize(train, k);
     cost_hist = zeros(max_iter,1);
     for iter = 1:max_iter
         for i = 1:size(train,1)
             [index, vec_distance] = assign_vector_to_centroid(train(i,:), centroids);
             train(i,785) = index;
-            cost_hist(iter) = cost_hist(iter) + vec_distance;
+            cost_hist(iter) = cost_hist(iter) + vec_distance^2;
         end
         centroids = update_centroids(train, k);
     end
@@ -181,15 +181,33 @@ function [preds, dists] = predict_all(test, centroids, centroid_labels)
     end
 end
 
-function y=initialize_centroids(data,num_centroids)
+
+
+function y=kmeansplusplus_initialize(data,num_centroids)
 
 random_index=randperm(size(data,1)); %shuffle to random order
 
-centroids=data(random_index(1:num_centroids),:); % get the first k rows
+centroids = data(random_index(1:num_centroids), :); %first centroid initialized is random
+
+for centroidIndex = 2:num_centroids
+    distances = min(pdist2(data, centroids(1:centroidIndex-1, :)).^2, [], 2); %compute squared distance to all previously assigned centroids
+    probabilities = distances / sum(distances);
+    centroids(centroidIndex, :) = data(randsample(size(data, 1), 1, true, probabilities), :);
+    %produce centroid with weighted probability based on distance
+end
 
 y=centroids;
 
 end
+%function y=initialize_centroids(data,num_centroids)
+
+%random_index=randperm(size(data,1)); %shuffle to random order
+
+%centroids=data(random_index(1:num_centroids),:); % get the first k rows
+
+%y=centroids;
+
+%end
 
 function [index, vec_distance] = assign_vector_to_centroid(data,centroids)
 %numbers needed
@@ -199,8 +217,7 @@ distance = zeros(num_centroids,1); %empty vector of zeros for storing distance
 %nearest neighbor calculation
 for i = 1:num_centroids
     % calculate pixel-pixel difference, square them, and add them up
-    distance(i) = 1 - dot(data(1:784), centroids(i,1:784)) / (norm(data(1:784)) * norm(centroids(i,1:784)) + eps);
-    %distance(i) = sqrt(sum ((data(1:784)- centroids(i,1:784)).^2)); 
+    distance(i) = sqrt(sum ((data(1:784)- centroids(i,1:784)).^2)); 
 end
 %all of the above can be accomplished via the vecnorm function --->
 %vecnorm(centroids(:,1:784) - data(1:784), 2, 2); 
@@ -216,8 +233,8 @@ new_centroids = zeros(K, size(data,2)); % create empty K x 785 vector, size has 
 
 for i=1:K %do once for each centroid
     members = data(data(:,785)==i, 1:784); %find every entry belonging to that centroid
-    c = mean(members,1);
-    new_centroids(i,1:784) = c / (norm(c) + eps);  %set new centroid to mean of all of its members
+    new_centroids(i,1:784)= mean(members,1);
+    
 end
 
 end

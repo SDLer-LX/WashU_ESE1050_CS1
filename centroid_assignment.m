@@ -29,7 +29,7 @@ labels = zeros(size(train,1),1);
 for iter = 1:max_iter
     % assign points
     D = pdist2(train, centroids);
-    labels = argmin(D, [], 2);
+    [~,labels] = min(D, [], 2);
     % recompute centroids
     new_centroids = zeros(size(centroids));
     for j = 1:k
@@ -46,7 +46,7 @@ for iter = 1:max_iter
     cost_curves(iter,1) = sum(sqd);
 end
 
-%%Implementation
+%% Implementation
 
 function y=kmeansplusplus_initialize(data,num_centroids)
 

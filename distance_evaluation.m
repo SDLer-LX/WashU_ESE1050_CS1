@@ -21,7 +21,7 @@ test(:,785) = zeros(200,1);
 %% numbers
 k = 30;             % fix k
 max_iter = 25;
-num_runs = 5;     %repeat and later average
+num_runs = 10;     %repeat and later average
 metrics = {'euclidean','manhattan','cosine','p3'};
  
 % store accuracy of run: rows = runs, cols = metrics
