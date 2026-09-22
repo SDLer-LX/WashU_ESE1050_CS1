@@ -62,14 +62,14 @@ imagesc(testimage'); % this command plots an array as an image.  Type 'help imag
 
 %% This next section of code calls the three functions you are asked to specify
 
-k= 60; % set k
+k= 40; % set k
 max_iter= 100; % set the number of iterations of the algorithm
-%cost_iteration graph reveals 25-ish is sufficient
 
 %% The next line initializes the centroids.  Look at the initialize_centroids()
 % function, which is specified further down this file.
+centroids=kmeansplusplus_initialize(train,k);
 
-centroids=initialize_centroids(train,k);
+%centroids=initialize_centroids(train,k);
 
 %% Initialize an array that will store k-means cost at each iteration
 
@@ -141,11 +141,28 @@ end
 
 %input: whole training set, k
 %output: a set of k random centroids
-function y=initialize_centroids(data,num_centroids)
+%function y=initialize_centroids(data,num_centroids)
+
+%random_index=randperm(size(data,1)); %shuffle to random order
+
+%centroids=data(random_index(1:num_centroids),:); % get the first k rows
+
+%y=centroids;
+
+%end
+
+function y=kmeansplusplus_initialize(data,num_centroids)
 
 random_index=randperm(size(data,1)); %shuffle to random order
 
-centroids=data(random_index(1:num_centroids),:); % get the first k rows
+centroids = data(random_index(1:num_centroids), :); %first centroid initialized is random
+
+for centroidIndex = 2:num_centroids
+    distances = min(pdist2(data, centroids(1:centroidIndex-1, :)).^2, [], 2); %compute squared distance to all previously assigned centroids
+    probabilities = distances / sum(distances);
+    centroids(centroidIndex, :) = data(randsample(size(data, 1), 1, true, probabilities), :);
+    %produce centroid with weighted probability based on distance
+end
 
 y=centroids;
 

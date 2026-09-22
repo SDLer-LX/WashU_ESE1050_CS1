@@ -16,7 +16,7 @@ test(:,785) = zeros(200,1);
 max_iter = 50;   % k-means iterations (cost curve shows it converges well before this)
 
 %% try k values
-k_values = [10 20 30 50 60 70 80 90 100 110];
+k_values = [10 20 30 40 50 60 70 80 90 100 110];
 accuracy = zeros(length(k_values),1);
 final_cost = zeros(length(k_values),1);
 
@@ -45,7 +45,7 @@ plot(k_values, accuracy, '-o', 'LineWidth', 1.6, 'MarkerSize', 7, ...
 title('Test Accuracy vs. Number of Centroids (k)', 'FontSize', 13, 'FontWeight', 'bold');
 xlabel('k (number of centroids)', 'FontSize', 11);
 ylabel('Test Accuracy', 'FontSize', 11);
-ylim([0 1]);
+ylim([0.5 1]);
 grid on;
 set(gca, 'FontSize', 10);
 
@@ -71,6 +71,7 @@ plot(1:max_iter, cost_hist, 'LineWidth', 1.6);
 title(sprintf('k-means Cost vs. Iteration (k = %d)', k), 'FontSize', 13, 'FontWeight', 'bold');
 xlabel('Iteration', 'FontSize', 11);
 ylabel('k-means Cost', 'FontSize', 11);
+
 grid on;
 set(gca, 'FontSize', 10);
 
