@@ -16,13 +16,15 @@ test(:,785) = zeros(200,1);
 
 k = 30;
 max_iter = 25;
-num_runs = 100;
+num_runs = 50;
 
 %store accuracy of run: rows = runs, cols = kmeans vs kmeans++
 acc_all = zeros(num_runs, 2);
 
-% keep one cost curve per metric (from its first run) for the convergence plot
+
 cost_curves = zeros(max_iter, 2);
+final_costs=zeros(num_runs, 2);
+iters_to_conv = zeros(num_runs, 2);
 
 % Initialize centroids with kmeans regularly
 
@@ -31,49 +33,57 @@ cost_curves = zeros(max_iter, 2);
 for r = 1:num_runs
     % Initialize centroids randomly for this run
     centroids = initialize_centroids(train, k);
-    labels = zeros(size(train, 1), 1);
+
     % train k-means (random init differs each run)
-    [centroids, cost_hist, assignments] = run_kmeans(train, k, max_iter, 'euclidean', centroids);
+    [centroids, cost_hist, assignments, nIter] = run_kmeans(train, k, max_iter, 'euclidean', centroids);
 
     % label centroids by majority vote
     centroid_labels = label_centroids(assignments, trainsetlabels, k);
 
     %evaluate on test set
     preds = predict_all(test, centroids, centroid_labels, 'euclidean');
-
+    iters_to_conv(r, 1) = nIter;
     acc_all(r, 1) = sum(preds == correctlabels) / 200;
+    final_costs(r, 1) = cost_hist(end);
 
     if r == 1
-        cost_curves(:, 1) = cost_hist;   % save first run's cost curve
+    cost_curves(:, 1) = NaN;
+    cost_curves(1:numel(cost_hist), 1) = cost_hist;
     end
+
 end
 
-fprintf('%-12s ->  mean accuracy = %.3f  (std %.3f) over %d runs\n', ...
-    'k-means', mean(acc_all(:,1)), std(acc_all(:,1)), num_runs);
+fprintf('%-12s ->  mean accuracy = %.3f  (std %.3f) over %d runs, mean final cost = %.3f\n', ...
+    'k-means', mean(acc_all(:,1)), std(acc_all(:,1)), num_runs, mean(final_costs(:,1)));
+fprintf('iter_to_conv -> mean = %.3f (std = %.3f)\n', mean(iters_to_conv(:,1)), std(iters_to_conv(:,1)));
 
 
 
 for r = 1:num_runs
     centroids = kmeansplusplus_initialize(train, k);
-    labels = zeros(size(train,1),1);
+
     % train k-means (random init differs each run)
-    [centroids, cost_hist, assignments] = run_kmeans(train, k, max_iter, 'euclidean', centroids);
+    [centroids, cost_hist, assignments, nIter] = run_kmeans(train, k, max_iter, 'euclidean', centroids);
  
     % label centroids by majority vote
     centroid_labels = label_centroids(assignments, trainsetlabels, k);
  
     %evaluate on test set
     preds = predict_all(test, centroids, centroid_labels, 'euclidean');
- 
+    iters_to_conv(r, 2) = nIter;
     acc_all(r, 2) = sum(preds == correctlabels) / 200;
+    final_costs(r, 2) = cost_hist(end);
  
     if r == 1
-        cost_curves(:, 2) = cost_hist;   % save first run's cost curve
+    cost_curves(:, 2) = NaN;
+    cost_curves(1:numel(cost_hist), 2) = cost_hist;
     end
+
 end
  
-    fprintf('%-12s ->  mean accuracy = %.3f  (std %.3f) over %d runs\n', ...
-            'k-means++', mean(acc_all(:,2)), std(acc_all(:,2)), num_runs);
+fprintf('%-12s ->  mean accuracy = %.3f  (std %.3f) over %d runs, mean final cost = %.3f\n', ...
+    'k-means++', mean(acc_all(:,2)), std(acc_all(:,2)), num_runs, mean(final_costs(:,2)));
+fprintf('iter_to_conv -> mean = %.3f (std = %.3f)\n', mean(iters_to_conv(:,2)), std(iters_to_conv(:,2)));
 
 
 
@@ -97,17 +107,30 @@ y=centroids;
 end
 
 
-function [centroids, cost_hist, assignments] = run_kmeans(train, k, max_iter, metric, centroids)
-cost_hist = zeros(max_iter,1);
+function [centroids, cost_hist, assignments, nIter] = run_kmeans(train, k, max_iter, metric, centroids)
+cost_hist = zeros(max_iter, 1);
+prev_idx = [];
+
 for iter = 1:max_iter
-    D = all_distances(train(:,1:784), centroids(:,1:784), metric); % 1500 x k
+    D = all_distances(train(:,1:784), centroids(:,1:784), metric);
     [mind, idx] = min(D, [], 2);
-    train(:,785)    = idx;
+
+    train(:,785) = idx;
     cost_hist(iter) = sum(mind);
     centroids = update_centroids(train, k);
+
+    if iter > 1 && isequal(idx, prev_idx)
+        break
+    end
+
+    prev_idx = idx;
 end
+
+nIter = iter;
+cost_hist = cost_hist(1:iter);
 assignments = train(:,785);
 end
+
 
 function y = initialize_centroids(data, num_centroids)
     ri = randperm(size(data,1));
@@ -117,9 +140,9 @@ end
 function D = all_distances(X, C, metric)
 switch metric
     case 'euclidean'
-        xx = sum(X.^2, 2);
-        cc = sum(C.^2, 2)';
-        D  = sqrt(max(xx + cc - 2*(X*C'), 0));
+        xx = sum(X.^2, 2);           
+        cc = sum(C.^2, 2)';          
+        D  = max(xx + cc - 2*(X*C'), 0);
 
     otherwise
         error('Unknown metric: %s', metric);
